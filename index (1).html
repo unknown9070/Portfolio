@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jatin Negi — Game Dev & AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --bg:     #0a0a0f;
+    --bg2:    #0f0f1a;
+    --card:   #12121e;
+    --border: rgba(255,255,255,0.07);
+    --white:  #ffffff;
+    --dim:    rgba(255,255,255,0.55);
+    --dimmer: rgba(255,255,255,0.28);
+    --accent: #7c6fff;
+    --accent2:#4fd1c5;
+    --glow:   rgba(124,111,255,0.18);
+  }
+
+  html { scroll-behavior:smooth; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--white); overflow-x:hidden; cursor:none; }
+
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--accent); border-radius:4px; }
+
+  /* ── CUSTOM CURSOR ── */
+  #cursor {
+    position:fixed; width:8px; height:8px;
+    background:var(--accent); border-radius:50%;
+    pointer-events:none; z-index:9999;
+    transform:translate(-50%,-50%);
+  }
+  #cursor-ring {
+    position:fixed; width:32px; height:32px;
+    border:1.5px solid rgba(124,111,255,0.6); border-radius:50%;
+    pointer-events:none; z-index:9998;
+    transform:translate(-50%,-50%);
+    transition:width 0.3s, height 0.3s, border-color 0.3s;
+  }
+  body:has(a:hover) #cursor-ring,
+  body:has(button:hover) #cursor-ring { width:50px; height:50px; border-color:var(--accent2); }
+
+  /* ── PARTICLES ── */
+  #particles { position:fixed; inset:0; pointer-events:none; z-index:0; }
+
+  /* ── NAV ── */
+  nav {
+    position:fixed; top:0; left:0; right:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 56px;
+    background:rgba(10,10,15,0.75);
+    backdrop-filter:blur(24px);
+    border-bottom:1px solid var(--border);
+    z-index:100;
+    animation:fadeDown 0.7s ease both;
+  }
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+
+  .logo { font-family:'Syne',serif; font-size:18px; font-weight:800; color:var(--white); text-decoration:none; letter-spacing:-0.5px; }
+  .logo span { color:var(--accent); }
+  .nav-links { display:flex; gap:32px; list-style:none; }
+  .nav-links a { font-size:13px; color:var(--dim); text-decoration:none; letter-spacing:0.04em; transition:color 0.2s; position:relative; padding-bottom:3px; }
+  .nav-links a::after { content:''; position:absolute; bottom:0; left:0; width:0; height:1px; background:var(--accent); transition:width 0.3s; }
+  .nav-links a:hover { color:var(--white); }
+  .nav-links a:hover::after { width:100%; }
+  .nav-cta {
+    font-size:13px; font-weight:500;
+    background:var(--accent); color:#fff;
+    padding:9px 22px; border-radius:100px; text-decoration:none;
+    transition:transform 0.2s, box-shadow 0.2s;
+    box-shadow:0 0 20px var(--glow);
+    animation:glowPulse 3s ease-in-out infinite;
+  }
+  @keyframes glowPulse { 0%,100%{box-shadow:0 0 20px var(--glow)} 50%{box-shadow:0 0 40px rgba(124,111,255,0.4)} }
+  .nav-cta:hover { transform:scale(1.06); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height:100vh; display:flex; flex-direction:column; justify-content:center;
+    padding:140px 56px 100px; position:relative; overflow:hidden; z-index:1;
+  }
+  .hero-grid {
+    position:absolute; inset:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(124,111,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,111,255,0.05) 1px, transparent 1px);
+    background-size:60px 60px;
+    animation:gridShift 20s linear infinite;
+  }
+  @keyframes gridShift { from{background-position:0 0} to{background-position:60px 60px} }
+  .hero-orb {
+    position:absolute; top:-200px; right:-150px;
+    width:700px; height:700px;
+    background:radial-gradient(circle, rgba(124,111,255,0.14) 0%, transparent 70%);
+    pointer-events:none; animation:orbFloat 9s ease-in-out infinite;
+  }
+  .hero-orb2 {
+    position:absolute; bottom:-150px; left:-100px;
+    width:500px; height:500px;
+    background:radial-gradient(circle, rgba(79,209,197,0.08) 0%, transparent 70%);
+    pointer-events:none; animation:orbFloat 12s ease-in-out infinite reverse;
+  }
+  @keyframes orbFloat { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-28px,28px)} }
+
+  .hero-tag {
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(124,111,255,0.1); border:1px solid rgba(124,111,255,0.25);
+    padding:7px 16px; border-radius:100px;
+    font-size:12px; color:var(--accent); letter-spacing:0.06em;
+    width:fit-content; margin-bottom:32px;
+    opacity:0; animation:fadeUp 0.6s 0.2s ease both;
+  }
+  .live-dot { width:7px; height:7px; background:#4fd1c5; border-radius:50%; animation:pulse 2s infinite; }
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+
+  .hero-title {
+    font-family:'Syne',sans-serif;
+    font-size:clamp(52px,7vw,96px);
+    font-weight:800; letter-spacing:-3px; line-height:0.95;
+    margin-bottom:28px;
+    opacity:0; animation:fadeUp 0.8s 0.35s ease both;
+  }
+  .hero-title .name { display:block; }
+  .hero-title .role {
+    display:block;
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    background-size:200%; animation:gradientShift 5s ease infinite;
+  }
+  @keyframes gradientShift { 0%,100%{background-position:0%} 50%{background-position:100%} }
+  .hero-title .role::after {
+    content:'|'; -webkit-text-fill-color:var(--accent);
+    animation:blink 1s step-end infinite; margin-left:4px; font-weight:300;
+  }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+  .hero-bio {
+    font-size:16px; font-weight:300; color:var(--dim);
+    line-height:1.8; max-width:520px; margin-bottom:48px;
+    opacity:0; animation:fadeUp 0.7s 0.5s ease both;
+  }
+  .hero-bio strong { color:var(--white); font-weight:500; }
+
+  .hero-actions {
+    display:flex; gap:16px; align-items:center;
+    opacity:0; animation:fadeUp 0.7s 0.65s ease both;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg,var(--accent),#6458e8);
+    color:#fff; padding:14px 32px; border-radius:100px;
+    font-size:14px; font-weight:500; text-decoration:none;
+    box-shadow:0 0 32px var(--glow);
+    transition:transform 0.25s, box-shadow 0.25s;
+    position:relative; overflow:hidden;
+  }
+  .btn-primary:hover { transform:translateY(-3px); box-shadow:0 0 56px rgba(124,111,255,0.45); }
+  .btn-outline {
+    color:var(--dim); font-size:14px; text-decoration:none; padding:14px 20px;
+    border:1px solid var(--border); border-radius:100px;
+    transition:border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .btn-outline:hover { border-color:var(--accent); color:var(--white); background:rgba(124,111,255,0.07); }
+
+  .hero-stats {
+    display:flex; gap:20px; margin-top:64px; flex-wrap:wrap;
+    opacity:0; animation:fadeUp 0.7s 0.8s ease both;
+  }
+  .stat-chip {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:16px 24px;
+    transition:border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  }
+  .stat-chip:hover { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 8px 32px rgba(124,111,255,0.15); }
+  .stat-chip-num {
+    font-family:'Syne',sans-serif; font-size:28px; font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1;
+  }
+  .stat-chip-label { font-size:12px; color:var(--dimmer); margin-top:4px; }
+
+  .floaty {
+    position:absolute; font-size:11px; font-weight:500; letter-spacing:0.05em;
+    background:var(--card); border:1px solid var(--border);
+    padding:6px 14px; border-radius:100px; color:var(--dim);
+    pointer-events:none; white-space:nowrap;
+  }
+  .floaty:nth-child(1) { top:18%; right:12%; animation:floatA 7s ease-in-out infinite; }
+  .floaty:nth-child(2) { top:38%; right:6%;  animation:floatA 9s ease-in-out infinite 1s; }
+  .floaty:nth-child(3) { top:58%; right:16%; animation:floatA 8s ease-in-out infinite 0.5s; }
+  .floaty:nth-child(4) { top:75%; right:8%;  animation:floatA 10s ease-in-out infinite 2s; }
+  @keyframes floatA { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-14px) rotate(1deg)} }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(26px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── SKILLS ── */
+  .skills { padding:100px 56px; background:var(--bg2); position:relative; z-index:1; }
+  .section-eyebrow {
+    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-eyebrow::before { content:''; width:20px; height:1px; background:var(--accent); display:block; }
+  .section-title {
+    font-family:'Syne',sans-serif; font-size:clamp(30px,3.5vw,44px);
+    font-weight:800; letter-spacing:-1.5px; line-height:1.1; color:var(--white); margin-bottom:56px;
+  }
+  .section-title em { font-style:italic; color:var(--dim); }
+
+  .skills-groups { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+  .skill-group {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:20px; padding:32px;
+    transition:border-color 0.35s, transform 0.35s, box-shadow 0.35s;
+    position:relative; overflow:hidden;
+  }
+  .skill-group::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, var(--accent), var(--accent2));
+    transform:scaleX(0); transform-origin:left; transition:transform 0.4s ease;
+  }
+  .skill-group:hover { border-color:var(--accent); transform:translateY(-6px); box-shadow:0 16px 48px rgba(124,111,255,0.12); }
+  .skill-group:hover::before { transform:scaleX(1); }
+  .skill-group-icon { font-size:28px; margin-bottom:16px; display:block; transition:transform 0.3s; }
+  .skill-group:hover .skill-group-icon { transform:scale(1.2) rotate(-5deg); }
+  .skill-group-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:var(--white); margin-bottom:18px; }
+  .skill-tags { display:flex; flex-wrap:wrap; gap:8px; }
+  .skill-tag {
+    font-size:12px; color:var(--dim);
+    background:rgba(255,255,255,0.05); border:1px solid var(--border);
+    padding:5px 12px; border-radius:100px;
+    transition:background 0.25s, color 0.25s, border-color 0.25s, transform 0.2s;
+  }
+  .skill-group:hover .skill-tag { background:rgba(124,111,255,0.1); border-color:rgba(124,111,255,0.3); color:var(--white); }
+
+  /* ── PROJECTS ── */
+  .projects { padding:100px 56px; position:relative; z-index:1; }
+
+  .projects-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:960px; margin:0 auto; }
+
+  /* single project card */
+  .project-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:20px; overflow:hidden;
+    transition:border-color 0.35s, box-shadow 0.35s, transform 0.35s;
+  }
+  .project-card:hover { border-color:var(--accent); box-shadow:0 20px 56px rgba(124,111,255,0.14); transform:translateY(-5px); }
+
+  .project-thumb {
+    width:100%; height:180px;
+    background:linear-gradient(135deg, #1a1a3e, #0f2027);
+    display:flex; align-items:center; justify-content:center;
+    font-size:48px; position:relative; overflow:hidden;
+  }
+  .project-thumb::before {
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 50%, rgba(124,111,255,0.18), transparent 70%);
+  }
+  .project-thumb-icon { z-index:1; }
+
+  /* placeholder add-card */
+  .project-add {
+    background:transparent;
+    border:2px dashed rgba(124,111,255,0.25);
+    border-radius:20px; min-height:280px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+    color:var(--dimmer); font-size:14px;
+    transition:border-color 0.3s, color 0.3s, background 0.3s;
+    cursor:default;
+  }
+  .project-add:hover { border-color:var(--accent); color:var(--dim); background:rgba(124,111,255,0.04); }
+  .project-add-icon { font-size:32px; opacity:0.4; }
+  .project-add-label { font-size:13px; letter-spacing:0.04em; }
+
+  .project-info { padding:24px; }
+  .project-badge { font-size:11px; color:var(--accent2); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px; }
+  .project-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; letter-spacing:-0.5px; color:var(--white); margin-bottom:10px; }
+  .project-desc { font-size:13px; color:var(--dim); line-height:1.7; margin-bottom:18px; }
+  .project-tech { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:18px; }
+  .tech-tag {
+    font-size:11px; padding:4px 11px; border-radius:100px;
+    background:rgba(124,111,255,0.12); border:1px solid rgba(124,111,255,0.25); color:var(--accent);
+    transition:background 0.2s;
+  }
+  .tech-tag:hover { background:rgba(124,111,255,0.25); }
+  .project-note {
+    font-size:12px; color:var(--dimmer);
+    border-left:2px solid var(--accent); padding-left:12px;
+    line-height:1.6; font-style:italic;
+  }
+
+  /* WIP banner */
+  .wip-banner {
+    background:rgba(79,209,197,0.07); border:1px solid rgba(79,209,197,0.2);
+    border-radius:16px; padding:20px 24px;
+    display:flex; gap:14px; align-items:flex-start;
+    max-width:960px; margin:28px auto 0;
+    animation:borderGlow 4s ease-in-out infinite;
+  }
+  @keyframes borderGlow { 0%,100%{border-color:rgba(79,209,197,0.2)} 50%{border-color:rgba(79,209,197,0.45)} }
+  .wip-icon { font-size:20px; flex-shrink:0; animation:wiggle 3s ease-in-out infinite; }
+  @keyframes wiggle { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+  .wip-text { font-size:14px; color:var(--dim); line-height:1.7; }
+  .wip-text strong { color:var(--accent2); }
+
+  /* ── EDUCATION ── */
+  .education { padding:100px 56px; background:var(--bg2); position:relative; z-index:1; }
+  .edu-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:20px; padding:40px 48px;
+    display:flex; align-items:center; justify-content:space-between; gap:40px;
+    max-width:900px; margin:0 auto;
+    transition:border-color 0.35s, transform 0.35s, box-shadow 0.35s;
+    position:relative; overflow:hidden;
+  }
+  .edu-card::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, var(--accent), var(--accent2));
+    transform:scaleX(0); transform-origin:left; transition:transform 0.5s ease;
+  }
+  .edu-card:hover { border-color:rgba(124,111,255,0.4); transform:translateY(-4px); box-shadow:0 16px 48px rgba(124,111,255,0.12); }
+  .edu-card:hover::after { transform:scaleX(1); }
+  .edu-left { display:flex; gap:24px; align-items:center; }
+  .edu-icon {
+    width:60px; height:60px; border-radius:16px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; flex-shrink:0;
+    animation:iconRotate 8s ease-in-out infinite;
+  }
+  @keyframes iconRotate { 0%,100%{transform:rotate(0)} 50%{transform:rotate(10deg)} }
+  .edu-degree { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:var(--white); margin-bottom:6px; }
+  .edu-uni { font-size:14px; color:var(--dim); margin-bottom:4px; }
+  .edu-loc { font-size:13px; color:var(--dimmer); }
+  .edu-badge-wrap { display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
+  .edu-year {
+    background:rgba(124,111,255,0.1); border:1px solid rgba(124,111,255,0.25);
+    border-radius:100px; padding:8px 20px;
+    font-size:13px; color:var(--accent); font-weight:500; white-space:nowrap;
+  }
+  .edu-type {
+    background:rgba(79,209,197,0.08); border:1px solid rgba(79,209,197,0.25);
+    border-radius:100px; padding:6px 16px;
+    font-size:12px; color:var(--accent2); white-space:nowrap;
+  }
+
+  /* ── CONTACT ── */
+  .contact { padding:100px 56px; position:relative; z-index:1; }
+  .contact-inner {
+    background:linear-gradient(135deg, #0f0f2a, #1a0a2e);
+    border:1px solid rgba(124,111,255,0.2);
+    border-radius:28px; padding:80px;
+    text-align:center; position:relative; overflow:hidden;
+    max-width:780px; margin:0 auto;
+    transition:border-color 0.4s, box-shadow 0.4s;
+  }
+  .contact-inner:hover { border-color:rgba(124,111,255,0.5); box-shadow:0 0 80px rgba(124,111,255,0.1); }
+  .contact-inner::before {
+    content:''; position:absolute; top:-100px; left:50%; transform:translateX(-50%);
+    width:500px; height:500px;
+    background:radial-gradient(circle,rgba(124,111,255,0.18),transparent 70%);
+    pointer-events:none; animation:orbFloat 8s ease-in-out infinite;
+  }
+  .contact-title { font-family:'Syne',sans-serif; font-size:clamp(32px,4vw,52px); font-weight:800; letter-spacing:-2px; color:var(--white); margin-bottom:16px; position:relative; }
+  .contact-sub { font-size:16px; color:var(--dim); line-height:1.7; margin-bottom:12px; position:relative; }
+  .contact-note { font-size:13px; color:var(--dimmer); margin-bottom:44px; position:relative; font-style:italic; }
+  .contact-links { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; position:relative; }
+  .contact-link {
+    display:flex; align-items:center; gap:10px;
+    padding:14px 28px; border-radius:100px;
+    font-size:14px; font-weight:500; text-decoration:none;
+    transition:transform 0.25s, box-shadow 0.25s;
+  }
+  .contact-link.email { background:linear-gradient(135deg,var(--accent),#6458e8); color:#fff; box-shadow:0 0 28px var(--glow); }
+  .contact-link.email:hover { transform:translateY(-3px); box-shadow:0 0 56px rgba(124,111,255,0.5); }
+  .contact-link.linkedin { background:var(--card); color:var(--dim); border:1px solid var(--border); }
+  .contact-link.linkedin:hover { border-color:var(--accent); color:var(--white); transform:translateY(-3px); }
+
+  footer { text-align:center; padding:28px; border-top:1px solid var(--border); font-size:12px; color:var(--dimmer); letter-spacing:0.04em; position:relative; z-index:1; }
+
+  .reveal { opacity:0; transform:translateY(32px); transition:opacity 0.75s ease, transform 0.75s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+  .reveal-left { opacity:0; transform:translateX(-32px); transition:opacity 0.75s ease, transform 0.75s ease; }
+  .reveal-left.visible { opacity:1; transform:translateX(0); }
+
+  @media(max-width:860px){
+    nav { padding:16px 24px; } .nav-links { display:none; }
+    .hero,.skills,.projects,.education,.contact { padding:80px 24px; }
+    .skills-groups,.projects-grid { grid-template-columns:1fr; }
+    .edu-card { flex-direction:column; align-items:flex-start; padding:28px; }
+    .edu-badge-wrap { align-items:flex-start; }
+    .contact-inner { padding:48px 28px; }
+    .floaty { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+<canvas id="particles"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">Jatin<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#education">Education</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Hire Me</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-orb"></div>
+  <div class="hero-orb2"></div>
+  
+  <div class="hero-tag">
+    <span class="live-dot"></span>
+    Looking for Internships · 2025
+  </div>
+
+  <h1 class="hero-title">
+    <span class="name">Jatin Negi</span>
+    <span class="role">Game Dev & AI</span>
+  </h1>
+
+  <p class="hero-bio">
+    <strong>Animation, 3D & Game Design student at Sharda University</strong> — passionate about building immersive games and intelligent systems. I work with <strong>Unity & C#</strong>, explore <strong>Machine Learning</strong>, and bring worlds to life through <strong>3D modeling & animation</strong>.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#projects" class="btn-primary">See My Work</a>
+    <a href="#contact" class="btn-outline">Get in touch →</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-chip">
+      <div class="stat-chip-num">1st</div>
+      <div class="stat-chip-label">Year Student</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-chip-num">7+</div>
+      <div class="stat-chip-label">Tools & Technologies</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-chip-num">1</div>
+      <div class="stat-chip-label">Game Shipped</div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section class="skills" id="skills">
+  <div class="section-eyebrow reveal-left">What I work with</div>
+  <h2 class="section-title reveal-left" style="transition-delay:0.1s">Skills & <em>Tools</em></h2>
+  <div class="skills-groups">
+    <div class="skill-group reveal">
+      <span class="skill-group-icon">🎮</span>
+      <div class="skill-group-title">Game Development</div>
+      <div class="skill-tags">
+        <span class="skill-tag">Unity</span>
+        <span class="skill-tag">C#</span>
+        <span class="skill-tag">Game Design</span>
+        <span class="skill-tag">2D / 3D Games</span>
+      </div>
+    </div>
+    <div class="skill-group reveal" style="transition-delay:0.12s">
+      <span class="skill-group-icon">🧊</span>
+      <div class="skill-group-title">3D Art & Animation</div>
+      <div class="skill-tags">
+        <span class="skill-tag">Maya</span>
+        <span class="skill-tag">Mudbox</span>
+        <span class="skill-tag">Substance Painter</span>
+        <span class="skill-tag">3D Modeling</span>
+        <span class="skill-tag">3D Animation</span>
+      </div>
+    </div>
+    <div class="skill-group reveal" style="transition-delay:0.24s">
+      <span class="skill-group-icon">🤖</span>
+      <div class="skill-group-title">AI & Programming</div>
+      <div class="skill-tags">
+        <span class="skill-tag">Python</span>
+        <span class="skill-tag">Machine Learning</span>
+        <span class="skill-tag">JavaScript</span>
+        <span class="skill-tag">SQL</span>
+        <span class="skill-tag">MySQL</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section class="projects" id="projects">
+  <div class="section-eyebrow reveal-left">What I've built</div>
+  <h2 class="section-title reveal-left" style="transition-delay:0.1s">Projects</h2>
+
+  <div class="projects-grid">
+
+    <!-- Project 1 — Flappy Bird -->
+    <div class="project-card reveal">
+      <div class="project-thumb">
+        <span class="project-thumb-icon">🐦</span>
+      </div>
+      <div class="project-info">
+        <div class="project-badge">🎮 Game · Unity · 2024</div>
+        <div class="project-title">Flappy Bird Clone</div>
+        <p class="project-desc">A fully playable 2D arcade game built from scratch in Unity. Implemented physics, collision detection, score tracking, and game loop logic in C#.</p>
+        <div class="project-tech">
+          <span class="tech-tag">Unity</span>
+          <span class="tech-tag">C#</span>
+          <span class="tech-tag">2D Physics</span>
+          <span class="tech-tag">Game Loop</span>
+        </div>
+        <p class="project-note">First shipped game — zero to playable product.</p>
+      </div>
+    </div>
+
+    <!-- Add project slot -->
+    
+
+  </div>
+
+  <!-- HOW TO ADD A PROJECT — comment for Jatin -->
+  <!--
+    TO ADD A NEW PROJECT: copy the block below and paste it inside .projects-grid
+
+    <div class="project-card reveal">
+      <div class="project-thumb">
+        <span class="project-thumb-icon">🎯</span>   ← change emoji
+      </div>
+      <div class="project-info">
+        <div class="project-badge">🎮 Game · Unity · 2025</div>   ← change badge
+        <div class="project-title">My New Game</div>               ← change title
+        <p class="project-desc">Short description here.</p>        ← change desc
+        <div class="project-tech">
+          <span class="tech-tag">Unity</span>                      ← add/remove tags
+        </div>
+        <p class="project-note">One line highlight.</p>
+      </div>
+    </div>
+  -->
+
+  <div class="wip-banner reveal">
+    <div class="wip-icon">🚧</div>
+    <div class="wip-text"><strong>More projects coming soon.</strong> Currently in 1st year and actively building. Check back or reach out if you'd like to offer an internship opportunity!</div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section class="education" id="education">
+  <div class="section-eyebrow reveal-left">Background</div>
+  <h2 class="section-title reveal-left" style="transition-delay:0.1s">Education</h2>
+  <div class="edu-card reveal">
+    <div class="edu-left">
+      <div class="edu-icon">🎓</div>
+      <div>
+        <div class="edu-degree">B.Sc — Animation, 3D Modeling<br>& Game Design and Development</div>
+        <div class="edu-uni">Sharda University</div>
+        <div class="edu-loc">📍 Greater Noida, India</div>
+      </div>
+    </div>
+    <div class="edu-badge-wrap">
+      <div class="edu-year">2024 – 2028</div>
+      <div class="edu-type">1st Year</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="contact-inner reveal">
+    <h2 class="contact-title">Open to Internships.</h2>
+    <p class="contact-sub">I'm a 1st-year student looking to gain real-world experience in game development, 3D art, or AI.</p>
+    <p class="contact-note">Not looking for freelance work right now — internship opportunities only.</p>
+    <div class="contact-links">
+      <a href="mailto:negijatin15913@gmail.com" class="contact-link email">✉︎ negijatin15913@gmail.com</a>
+      <a href="https://www.linkedin.com/in/jatin-negi-bb65a9364/" target="_blank" class="contact-link linkedin">in LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+<footer>© 2025 Jatin Negi · B.Sc Animation & Game Design · Sharda University · Greater Noida</footer>
+
+<script>
+// Custom cursor
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{ mx=e.clientX; my=e.clientY; cur.style.left=mx+'px'; cur.style.top=my+'px'; });
+(function animRing(){ rx+=(mx-rx)*0.1; ry+=(my-ry)*0.1; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(animRing); })();
+
+// Particles
+const canvas=document.getElementById('particles');
+const ctx=canvas.getContext('2d');
+let W,H,pts=[];
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+resize(); window.addEventListener('resize',resize);
+for(let i=0;i<70;i++) pts.push({ x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight, vx:(Math.random()-.5)*0.35, vy:(Math.random()-.5)*0.35, r:Math.random()*1.5+0.5, o:Math.random()*0.5+0.1 });
+function drawParticles(){
+  ctx.clearRect(0,0,W,H);
+  pts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=`rgba(124,111,255,${p.o})`; ctx.fill(); });
+  for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){ const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy); if(d<120){ ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.strokeStyle=`rgba(124,111,255,${0.12*(1-d/120)})`; ctx.lineWidth=0.5; ctx.stroke(); } }
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// Scroll reveal
+const obs=new IntersectionObserver(entries=>{ entries.forEach(e=>{ if(e.isIntersecting)e.target.classList.add('visible'); }); },{threshold:0.1});
+document.querySelectorAll('.reveal,.reveal-left').forEach(el=>obs.observe(el));
+
+// Parallax orbs on mouse
+document.addEventListener('mousemove',e=>{
+  const x=(e.clientX/window.innerWidth-.5)*20, y=(e.clientY/window.innerHeight-.5)*20;
+  document.querySelector('.hero-orb').style.transform=`translate(${x}px,${y}px)`;
+  document.querySelector('.hero-orb2').style.transform=`translate(${-x}px,${-y}px)`;
+});
+</script>
+</body>
+</html>
